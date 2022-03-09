@@ -12,12 +12,12 @@ def create_legend(img,pt1,pt2):
     cv2.putText(img,text2, pt2, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
     
 def main():
-    image_name = "book"
-    video  =read_video(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
+    image_name = "bear"
+    video  =read_video(image_name, r'.\sequences-train')
     first_frame = video[:,:,:,0]
     print(video.shape)
 
-    masks = read_masks(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
+    masks = read_masks(image_name, r'.\sequences-train')
     print("MAIN:",first_frame.shape)
     
     
@@ -56,9 +56,9 @@ def main():
             cv2.circle(img, (y2,x2), 1, (255,0,0),thickness=10) 
         # after resampling
         for (x1,y1,scale1) in distrib:
-        	x1 = int(x1)
-        	y1 = int(y1)
-        	cv2.circle(img, (y1,x1), 1, (0,0,255),thickness=10) 
+            x1 = int(x1)
+            y1 = int(y1)
+            cv2.circle(img, (y1,x1), 1, (0,0,255),thickness=10) 
         	
 
         cv2.rectangle(img,p1,p2,(0,0,255),thickness=5)
@@ -68,8 +68,12 @@ def main():
 
         cv2.imshow('frame',img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            break          
-        # sleep(5)
+            break       
+
+
+
+
+
 
     # cap.release()
     cv2.destroyAllWindows()
