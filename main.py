@@ -1,8 +1,9 @@
 
 import cv2
-from particle_filter import ParticleFilter,read_video,read_masks,gt_centroid
+from particle_filter import ParticleFilter,read_video,read_masks,gt_centroid, square_size
 import numpy as np
 import matplotlib.pyplot as plt
+from time import sleep
 
 def create_legend(img,pt1,pt2):
     text1 = "Before resampling"
@@ -11,18 +12,23 @@ def create_legend(img,pt1,pt2):
     cv2.putText(img,text2, pt2, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
     
 def main():
-    image_name = "swan"
+    image_name = "book"
     video  =read_video(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
     first_frame = video[:,:,:,0]
     print(video.shape)
 
     masks = read_masks(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
     print("MAIN:",first_frame.shape)
- 
+    
+    
     first_frame = cv2.cvtColor(first_frame.astype('uint8'), cv2.COLOR_BGR2HSV)
+    first_mask = masks[:,:,0,0].astype('uint8')
     x,y = gt_centroid(masks[:,:,:,0])
 
-    pf = ParticleFilter(x,y,first_frame,n_particles=500,square_size=10,
+    sq_size = square_size(masks[:,:,:,0])
+    print(sq_size)
+    seg = first_frame[first_mask==0]=0
+    pf = ParticleFilter(x,y,first_frame, first_mask=first_mask,n_particles=500,square_size=sq_size,
     						dt=0.20)
     alpha = 0.5
     index =-1
@@ -63,7 +69,8 @@ def main():
         cv2.imshow('frame',img)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break          
-    
+        # sleep(5)
+
     # cap.release()
     cv2.destroyAllWindows()
 

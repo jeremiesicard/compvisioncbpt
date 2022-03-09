@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import os
 
-gb_sq_size = 20
 
 def init_particles(state,n):
     particles = np.array([state,]*n)
@@ -15,11 +14,11 @@ def get_view(image,x,y,sq_size):
     """
     # print("get_view", image.shape, x, y ,sq_size)
     # with numpy arrays this is an O(1) operation
-    view = image[int(x-gb_sq_size/2):int(x+gb_sq_size/2),
-                 int(y-gb_sq_size/2):int(y+gb_sq_size/2),:]
+    view = image[int(x-sq_size/2):int(x+sq_size/2),
+                 int(y-sq_size/2):int(y+sq_size/2),:]
     return view
     
-def calc_hist(image):
+def calc_hist(image, mask=None):
     """
     Computes the color histogram of an image (or from a region of an image).
     
@@ -28,9 +27,17 @@ def calc_hist(image):
     return: One dimensional Numpy array
     """
     # print(image.shape)
-    mask = cv2.inRange(image, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
-    hist = cv2.calcHist([image],[0],mask,[180],[0,180])
-    cv2.normalize(hist,hist,0,1,norm_type=cv2.NORM_MINMAX)
+    if mask is None:
+        mask = cv2.inRange(image, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
+        hist = cv2.calcHist([image],[0],mask,[180],[0,180])
+        cv2.normalize(hist,hist,0,1,norm_type=cv2.NORM_MINMAX)
+    else:
+        # mask = cv2.inRange(image, np.array((0., 60.,32.)), np.array((180.,255.,255.)))
+        print(mask.shape)
+        print(image.shape)
+        hist = cv2.calcHist([image],[0],mask,[180],[0,180])
+        cv2.normalize(hist,hist,0,1,norm_type=cv2.NORM_MINMAX)
+     
     return hist
 
 def comp_hist(hist1,hist2):
@@ -71,15 +78,25 @@ def gt_centroid(mask):
     x_gtcentroid, y_gtcentroid = x_list.mean(), y_list.mean()
     return x_gtcentroid,y_gtcentroid
 
+def square_size(mask):
+    x_list, y_list, _ = (mask == 255).nonzero()
+    print(np.min(y_list), np.max(y_list))
+    # sq_size = np.max(x_list)-np.min(x_list)
+    return np.max( np.array(np.max(x_list)-np.min(x_list),  np.max(y_list)-np.min(y_list)))
+    # return sq_size
 
+# class ParticleFilter(object):
+#     def __init__(self, x, y, first_frame, first_mask, n_particles, dt = 0.04):
+#         self.n_particles = n_particles
+#         self.n_iter = 
 
 class ParticleFilter(object):
-    def __init__(self,x,y,first_frame,n_particles=1000,dt=0.04,square_size=20):
+    def __init__(self,x,y,first_frame, first_mask,n_particles=1000,dt=0.04,square_size=20):
         self.n_particles = n_particles
         self.n_iter = 0
         self.state = np.array([x,y,square_size]) 
         # state =[X[t],Y[t],S[t],X[t-1],Y[t-1],S[t-1]]
-        self.std_state = np.array([15,15,1])
+        self.std_state = np.array([15,15,0])
 
         self.window_size = first_frame.shape
         
@@ -97,9 +114,9 @@ class ParticleFilter(object):
 
 
         self.particles = init_particles(self.state,n_particles)
-        self.last_particles = np.array(self.particles)                                
-                                        
-        self.hist = calc_hist(get_view(first_frame,x,y,square_size))
+        self.last_particles = np.array(self.particles)             
+        self.hist = calc_hist(first_frame, first_mask)
+        hist
         
      
     def next_state(self,frame):       
@@ -113,15 +130,7 @@ class ParticleFilter(object):
         self.last_particles = np.array(self.particles)
         self.particles = self.resample(control_prediction,weights)
         self.state = np.mean(self.particles,axis=0)
-        print(self.state)
-        # if self.state[0]+self.state[2]>frame.shape[0]:
-        #     self.state[0] = frame.shape[0] - self.state[2]  
-        # if self.state[1]+self.state[2]>frame.shape[1]:
-        #     self.state[1] = frame.shape[1] - self.state[2]
-        # if self.state[0]-self.state[2]<0:
-        #     self.state[0] = self.state[2]  
-        # if self.state[1]-self.state[2]< 0:
-        #     self.state[1] = self.state[2]
+      
         self.last_frame = np.array(frame)
         # self.n_iter += 1
         self.hist = calc_hist(get_view(frame,self.state[0],self.state[1],self.state[2]))
