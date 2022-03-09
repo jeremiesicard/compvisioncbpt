@@ -11,18 +11,18 @@ def create_legend(img,pt1,pt2):
     cv2.putText(img,text2, pt2, cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,255))
     
 def main():
-
-    video  =read_video('bag', r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
+    image_name = "swan"
+    video  =read_video(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
     first_frame = video[:,:,:,0]
     print(video.shape)
 
-    masks = read_masks('bag', r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
+    masks = read_masks(image_name, r'C:\Users\achraf\Desktop\IMT Atlantique\3A\computer vision\sequences-train')
     print("MAIN:",first_frame.shape)
  
     first_frame = cv2.cvtColor(first_frame.astype('uint8'), cv2.COLOR_BGR2HSV)
     x,y = gt_centroid(masks[:,:,:,0])
 
-    pf = ParticleFilter(x,y,first_frame,n_particles=5,square_size=10,
+    pf = ParticleFilter(x,y,first_frame,n_particles=500,square_size=10,
     						dt=0.20)
     alpha = 0.5
     index =-1
@@ -64,7 +64,7 @@ def main():
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break          
     
-    cap.release()
+    # cap.release()
     cv2.destroyAllWindows()
 
 if __name__=="__main__":
